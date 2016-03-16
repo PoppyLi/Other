@@ -122,7 +122,7 @@ if($Com =="" && $month ==""){
 <? }else{ 
 	if(isset($Com) && isset($month)){
 		//获取职能考核
-		$sqlGetPjb = "SELECT * FROM pu_pj WHERE GSId = '$Com' and Time= '$month' order by ZnKhId,KhZbId ASC";
+		$sqlGetPjb = "SELECT pu_pj.*,pu_khzb.KhZbName,pu_znkh.ZnKhName FROM pu_pj left join pu_khzb on pu_pj.KhZbId=pu_khzb.KhZbId left join pu_znkh on pu_pj.ZnKhId=pu_znkh.ZnKhId WHERE GSId = '$Com' and Time= '$month' order by ZnKhId,KhZbId ASC";
 		$EnGetPjbZn = exequery($connection,$sqlGetPjb);
 		while($rowGetPjbZn = mysql_fetch_array($EnGetPjbZn)){
 			$tempGetPjbZn[] = $rowGetPjbZn;
@@ -130,96 +130,32 @@ if($Com =="" && $month ==""){
 		if(isset($tempGetPjbZn)){
 			$arrGetPjbZn = array();
 			unset($arrGetPjbZn);
-			foreach($tempGetPjbZn as $k => $v){
-				$arrGetPjbZn[] = $v['ZnKhId'];//$arrGetPjbZn  数组
-			}
-		}else{
-			echo "职能考核Id查询无结果!";
-			die();
-		}
-				
-		//通过职能考核id查询职能考核名
-		$sqlZnIdToName = "SELECT ZnKhName FROM pu_znkh ORDER BY ZnKhId ASC";
-		$EnZnIdToName = exequery($connection, $sqlZnIdToName);
-		while($rowZnIdToName = mysql_fetch_array($EnZnIdToName)){
-			$tempZnIdToName[]=$rowZnIdToName;
-		}
-		if(isset($tempZnIdToName)){
 			$arrZnIdToName = array();
 			unset($arrZnIdToName);
-			foreach($tempZnIdToName as $k => $v){
-				$arrZnIdToName[] = $v['ZnKhName'];//$arrZnIdToName  数组
-			}
-		}else{
-			echo "职能考核Name查询无结果!";
-			die();
-		}
-		
-		//获取考核指标
-		$EnGetPjbKh = exequery($connection, $sqlGetPjb);
-		while($rowGetPjbKh = mysql_fetch_array($EnGetPjbKh)){
-			$tempGetPjbKh[]=$rowGetPjbKh;
-		}
-		if(isset($tempGetPjbKh)){
 			$arrGetPjbKh = array();
 			unset($arrGetPjbKh);
-			foreach($tempGetPjbKh as $k=>$v){
-				$arrGetPjbKh[] = $v['KhZbId'];//$arrGetPjbKh 数组
-			}
-		}else{
-			echo "考核Id指标查询无结果!";
-			die();
-		}
-	
-		//通过考核指标id查询职能考核名
-		$sqlKhIdToName = "SELECT KhZbName FROM pu_khzb ORDER BY KhZbId ASC";
-		$EnKhIdToName = exequery($connection, $sqlKhIdToName);
-		while($rowKhIdToName = mysql_fetch_array($EnKhIdToName)){
-			$tempKhIdToName[]=$rowKhIdToName;
-		}
-		if(isset($tempKhIdToName)){
 			$arrKhIdToName = array();
 			unset($arrKhIdToName);
-			foreach($tempKhIdToName as $k=>$v){
-				$arrKhIdToName[] = $v['KhZbName'];//$arrKhIdToName 数组
+			$arrGetPjbSj = array();
+			unset($arrGetPjbSj);
+			$arrGetPjbPjf = array();
+			unset($arrGetPjbPjf);			
+			
+			foreach($tempGetPjbZn as $k => $v){
+				$arrGetPjbZn[] = $v['ZnKhId'];//$arrGetPjbZn  数组
+				$arrZnIdToName[] = $v['ZnKhName'];
+				$arrGetPjbKh[] = $v['KhZbId'];
+				$arrKhIdToName[] = $v['KhZbName'];
+				$arrGetPjbSj[] = $v['SjJg'];
+				$arrGetPjbPjf[] = $v['Pjf'];
 			}
 		}else{
-			echo "考核Name指标查询无结果!";
+			echo "绩效考核查询无结果!";
 			die();
 		}
 		
-		//获取实际结果
-		$EnGetPjbSj = exequery($connection, $sqlGetPjb);
-		while($rowGetPjbSj = mysql_fetch_array($EnGetPjbSj)){
-			$tempGetPjbSj[]=$rowGetPjbSj;
-		}
-		if(isset($tempGetPjbSj)){
-			$arrGetPjbSj = array();
-			unset($arrGetPjbSj);
-			foreach($tempGetPjbSj as $k=>$v){
-				$arrGetPjbSj[] = $v['SjJg'];//$arrGetPjbSj 数组
-			}
-		}else{
-			echo "实际结果查询无结果!";
-			die();
-		}
-		//获取评价分
-		$EnGetPjbPjf = exequery($connection, $sqlGetPjb);
-		while($rowGetPjbPjf = mysql_fetch_array($EnGetPjbPjf)){
-			$tempGetPjbPjf[]=$rowGetPjbPjf;
-		}
-		if(isset($tempGetPjbPjf)){
-			$arrGetPjbPjf = array();
-			unset($arrGetPjbPjf);
-			foreach($tempGetPjbPjf as $k=>$v){
-				$arrGetPjbPjf[] = $v['Pjf'];//$arrGetPjbPjf 数组
-			}
-		}else{
-			echo "评价分查询无结果!";
-			die();
-		}
 		//职能考核每个项目的个数	
-		$sqlGetPjbKhCount ="select count(ZnKhId) ZnKhId from pu_pj where GSId = '$Com' and Time = '$month' group by ZnKhId order by KhZbId";
+		$sqlGetPjbKhCount ="select count(ZnKhId) ZnKhId from pu_pj where GSId = '$Com' and Time = '$month' group by ZnKhId";
 		$EnGetPjbKhCount = exequery($connection,$sqlGetPjbKhCount);
 		while($rowGetPjbPKhCount = mysql_fetch_array($EnGetPjbKhCount)){
 			$tempGetPjbPKhCount[] = $rowGetPjbPKhCount;
@@ -253,9 +189,9 @@ if($Com =="" && $month ==""){
 		for($fortemp = 0;$fortemp < count($arrGetPjbKh);$fortemp++){
 			echo  "<tr>
 			"; if($topifs){ echo "
-			<td rowspan='"; echo $arrGetPjbPKhCount[$topifsCount]; echo "' width='80' height='15'>"; echo $arrZnIdToName[$arrGetPjbZn[$fortemp]-1]; echo "</td>
+			<td rowspan='"; echo $arrGetPjbPKhCount[$topifsCount]; echo "' width='80' height='15'>"; echo $arrZnIdToName[$fortemp]; echo "</td>
 			"; } echo"
-			<td width='120'>"; echo $arrKhIdToName[$arrGetPjbKh[$fortemp]-1]; echo "</td>
+			<td width='120'>"; echo $arrKhIdToName[$fortemp]; echo "</td>
 			<td>"; echo $arrGetPjbSj[$fortemp]; echo "</td>
 			<td width='80'>"; echo $arrGetPjbPjf[$fortemp]; echo"</td>
 			</tr>";

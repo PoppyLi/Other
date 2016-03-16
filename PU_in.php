@@ -12,46 +12,53 @@ foreach($tempGSName as $k=>$v){
 	$arrGSName[] = $v['GSName'];
 }
 
-include_once("SetTable.php");
-
-
-//通过职能考核id查询职能考核名
-$sqlZnIdToName = "SELECT ZnKhName FROM pu_znkh ORDER BY ZnKhId ASC";
-$EnZnIdToName = exequery($connection, $sqlZnIdToName);
-while($rowZnIdToName = mysql_fetch_array($EnZnIdToName)){
-	$tempZnIdToName[]=$rowZnIdToName;
+//获取职能考核及考核指标
+$sqlGetPjb = "SELECT pu_khzb.*,pu_znkh.ZnKhName FROM pu_khzb left join pu_znkh on pu_khzb.ZnKhId=pu_znkh.ZnKhId where pu_khzb.state=1 and pu_znkh.state=1 order by ZnKhId,KhZbId ASC";
+$EnGetPjbZn = exequery($connection,$sqlGetPjb);
+while($rowGetPjbZn = mysql_fetch_array($EnGetPjbZn)){
+	$tempGetPjbZn[] = $rowGetPjbZn;
 }
-if(isset($tempZnIdToName)){
+if(isset($tempGetPjbZn)){
+	$arrGetPjbZn = array();
+	unset($arrGetPjbZn);
 	$arrZnIdToName = array();
 	unset($arrZnIdToName);
-	foreach($tempZnIdToName as $k=>$v){
-		$arrZnIdToName[] = $v['ZnKhName'];//$arrZnIdToName  数组
+	$arrGetPjbKh = array();
+	unset($arrGetPjbKh);
+	$arrKhIdToName = array();
+	unset($arrKhIdToName);		
+	
+	foreach($tempGetPjbZn as $k => $v){
+		$arrKhZbZnId[] = $v['ZnKhId'];
+		$arrZnIdToName[] = $v['ZnKhName'];
+		$arrKhZbKhId[] = $v['KhZbId'];
+		$arrKhIdToName[] = $v['KhZbName'];
 	}
 }else{
-	echo"<script>alert('职能考核Name查询无结果!');history.go(-1);</script>";
+	echo "绩效考核查询无结果!";
 	die();
 }
 
-//通过考核指标id查询职能考核名
-$sqlKhIdToName = "SELECT KhZbName FROM pu_khzb ORDER BY KhZbId ASC";
-$EnKhIdToName = exequery($connection, $sqlKhIdToName);
-while($rowKhIdToName = mysql_fetch_array($EnKhIdToName)){
-	$tempKhIdToName[]=$rowKhIdToName;
+//职能考核每个项目的个数
+$sqlSetTableCount ="select  count(ZnKhId) ZnKhId from pu_khzb where state = 1 group by ZnKhId";
+$EnSetTableCount = exequery($connection, $sqlSetTableCount);
+while($rowSetTableCount = mysql_fetch_array($EnSetTableCount)){
+	$tempSetTableCount[]=$rowSetTableCount;
 }
-if(isset($tempKhIdToName)){
-	$arrKhIdToName = array();
-	unset($arrKhIdToName);
-	foreach($tempKhIdToName as $k=>$v){
-		$arrKhIdToName[] = $v['KhZbName'];//$arrKhIdToName 数组
+if(isset($tempSetTableCount)){
+	$arrSetTableCount = array();
+	unset($arrSetTableCount);
+	foreach($tempSetTableCount as $k=>$v){
+		$arrSetTableCount[] = $v['ZnKhId'];//$arrSetTableCount 数组
 	}
 }else{
-	echo"<script>alert('考核Name指标查询无结果!');history.go(-1);</script>";
 	die();
 }
+
 
 if($incom !="" && $inmonth !=""){
-	//获取职能考核
-	$sqlGetPjb = "SELECT SjJg,Pjf FROM pu_pj WHERE GSId = '$incom' and Time = '$inmonth"."-01' order by KhZbId";
+	//获取职能考核的评分和实际结果
+	$sqlGetPjb = "SELECT SjJg,Pjf FROM pu_pj WHERE GSId = '$incom' and Time = '$inmonth"."-01' order by ZnKhId,KhZbId ASC";
 	$EnGetPjbZn = exequery($connection,$sqlGetPjb);
 	while($ROW = mysql_fetch_array($EnGetPjbZn)){
 		$GetSjjg[] = $ROW["SjJg"];
@@ -129,18 +136,18 @@ function GetInfo(){
 			$topifs = true;
 			$topifsNum = 1;
 			$topifsCount = 0;
-			for($fortemp = 0; $fortemp < count ( $arrKhZbZnId ); $fortemp ++) {
+			for($fortemp = 0; $fortemp < count($arrKhZbZnId); $fortemp++) {
 				echo "<tr>
 					";
 					if ($topifs) {
-						echo "<td rowspan='".$arrSetTableCount[$topifsCount]."' width='80' style='WORD-BREAK: break-all; WORD-WRAP: break-word'>".$arrZnIdToName[$arrKhZbZnId [$fortemp] - 1]."</td>";
+						echo "<td rowspan='".$arrSetTableCount[$topifsCount]."' width='80' style='WORD-BREAK: break-all; WORD-WRAP: break-word'>".$arrZnIdToName[$fortemp]."</td>";
 					}
-					echo "<td height='30' width='120' style='WORD-BREAK: break-all; WORD-WRAP: break-word'>".$arrKhIdToName [$arrKhZbKhId [$fortemp] - 1]."</td>
+					echo "<td height='30' width='120' style='WORD-BREAK: break-all; WORD-WRAP: break-word'>".$arrKhIdToName[$fortemp]."</td>
 					<td><input value='".$GetSjjg[$fortemp]."' type='text' style='width:270px;height:22px;' name='jg_"; echo $arrKhZbZnId[$fortemp];echo"_";echo $arrKhZbKhId[$fortemp];echo "' /></td>
 					<td><input value='".$GetPjf[$fortemp]."'  type='text' style='width:63px;height:22px;text-align:right;' name='pj_"; echo $arrKhZbZnId[$fortemp];echo"_";echo $arrKhZbKhId[$fortemp];echo "' /></td>
 				</tr>";
 				$topifs = false;
-				if ($topifsNum / $arrSetTableCount [$topifsCount] == 1) {
+				if ($topifsNum/$arrSetTableCount[$topifsCount]==1) {
 					$topifs = true;
 					$topifsCount ++;
 					$topifsNum = 0;
